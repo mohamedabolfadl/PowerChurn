@@ -1,159 +1,196 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul 11 09:03:51 2017
-Function to investigate the correlation between features and output
-@author: Moh2
+Created on Tue Jul 11 11:48:38 2017
+
+@author: m00760171
 """
 
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jul 11 11:34:32 2017
+
+@author: m00760171
+"""
+
+
+# Importing the libraries
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
+#plt.figure()
+
 # Importing the dataset
 dataset = pd.read_csv('ml_case_training_data_cleaned.csv')
-dataset_all_pos = dataset
-minVs = dataset_all_pos.min(axis=0)
-colns = list(dataset)
-for i in range(len(colns)):
-    if minVs[i]<0:
-        dataset_all_pos[colns[i]] = dataset_all_pos[colns[i]] - minVs[i]
-
-X = dataset.iloc[:, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,33,34,35,36,37,38,39,40,41]].values
-y = dataset.iloc[:, 32].values
-
-X_p = dataset_all_pos.iloc[:, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,33,34,35,36,37,38,39,40,41]].values
-y_p = dataset_all_pos.iloc[:, 32].values
+X = dataset.iloc[:, [25]].values
+y = dataset.iloc[:, 0].values
 
 
 # Filling NaNs with their mean
 from sklearn.preprocessing import Imputer
 imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
-imputer = imputer.fit(X[:, 1:32])
-X[:, 1:32] = imputer.transform(X[:, 1:32]) 
-
-imputer = imputer.fit(X_p[:, 1:32])
-X_p[:, 1:32] = imputer.transform(X_p[:, 1:32]) 
-
-
-# Splitting the dataset into the Training set and Test set
-from sklearn.cross_validation import train_test_split
-#from sklearn.model_selection import train_test_split
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
-
-# Feature Scaling
-from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
-X_norm = sc.fit_transform(X)
-
-#X_p = sc.fit_transform(X_p) 
-
-# Fitting Random Forest Classification to the Training set
-from sklearn.ensemble import RandomForestClassifier
-classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
-classifier.fit(X_train, y_train)
-#y_conf_1 = classifier.decision_function(X_test)
-y_conf_2 = classifier.predict_proba(X_test)
-# Predicting the Test set results
-y_pred = classifier.predict(X_test)
-# Making the Confusion Matrix
-from sklearn.metrics import confusion_matrix, accuracy_score
-cm = confusion_matrix(y_test, y_pred)
-print 'Random Forest accuracy = ' + str(100.0*accuracy_score(y_test, y_pred))
+imputer = imputer.fit(X)
+X = imputer.transform(X) 
+imputer = imputer.fit(y)
+y = imputer.transform(y) 
 
 
+# Scatter plot of consumed and subscribed powers
+plt.scatter(X, y/10000,s =0.2)
+plt.show()
+plt.grid()
+plt.xlabel("Subscribed")
+plt.ylabel("Consumed")
+plt.ylim([0,700])
+plt.xlim([0,200])
 
-# K Best
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import chi2, f_classif
+X = dataset.iloc[:, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]].values
+y = dataset.iloc[:, [32]].values
+
+# Filling NaNs with their mean
+from sklearn.preprocessing import Imputer
+imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
+imputer = imputer.fit(X)
+X = imputer.transform(X) 
 
 
-#test = SelectKBest(score_func=chi2, k=4)
-test = SelectKBest(score_func=f_classif, k=4)
-X_p = X
+# Correlations of all features
+X_a = np.array(X)
+dims = X_a.shape
+plt.figure()
+corrs = np.zeros((dims[1], dims[1]))
+for i in range(dims[1]):
+    for j in range(dims[1]):
+        R = np.corrcoef(X_a[:,i],X_a[:,j])
+        cc = R[0][1]
+        corrs[i][j]=cc
+        if cc<0:
+            plt.scatter(i,j,s=150.0*abs(cc),alpha=0.5, c = [1.0*abs(cc),0,0.0])
+        else:
+            plt.scatter(i,j,s=150.0*abs(cc),alpha=0.5, c = [0.0,0,1.0*abs(cc)])
+           
+plt.grid()
+colns = list(dataset)
+cols = colns[0:32]
+df_all_corrs = pd.DataFrame(corrs, columns=cols, index = cols)
+df_all_corrs.to_csv('Correlations.csv', index=False)
+
+# Image of correlations
+plt.figure()
+plt.imshow(corrs)
+
+# Correlations of features
+y_r = np.array(y)
+corrs = np.zeros(( dims[1]))
+for i in range(dims[1]):
+        R = np.corrcoef(X_a[:,i],y_r[:,0])
+        cc = R[0][1]
+        corrs[i]=cc    
+
+colns = list(dataset)
+cols = colns[0:32]
+df_churn = pd.DataFrame(corrs, columns=["Churn"], index = cols)
+df_churn.to_csv('Correlations_churn.csv', index=True)
 
 
-fit = test.fit(X_p, y)
-# summarize scores
-np.set_printoptions(precision=3)
-print(fit.scores_)
-features = fit.transform(X_norm)
-# summarize selected features
-print(features[0:5,:])
-#Finding and plotting sorted indices
-scores = fit.scores_
-#[b[0] for b in sorted(enumerate(scores),key=lambda i:i[1])]
-sort_ind = sorted(range(len(scores)), key=lambda k: scores[k])
-sort_ind.reverse()
-feat_sort = []
-score_sort=[]
-colns.remove('churn')
-for i in range(len(sort_ind)):
-    feat_sort.append(colns[sort_ind[i]])
-    score_sort.append(scores[sort_ind[i]])
-
-#Bar chart
-N = 5
+# Plot top 4 correlated features to churn
 fig, ax = plt.subplots()
-ind = np.arange(len(feat_sort[0:N]))
+ind = np.arange(5)
 width = 0.2 
-rects1 = ax.bar(ind, (score_sort[0:N])/(sum(score_sort)), width, color='r')
-ax.set_ylabel('Score [%]')
-ax.set_title('Best Features')
-ax.set_xticks(ind + width / 2)
-ax.set_xticklabels(( feat_sort[0], feat_sort[1], feat_sort[2], feat_sort[3], feat_sort[4]))
+rects1 = ax.bar(1, 0.0809, width, color='b')
+rects2 = ax.bar(2, 0.0736, width, color='r')
+rects3 = ax.bar(3, 0.0519, width, color='r')
+rects4 = ax.bar(4, 0.0503, width, color='r')
+ax.set_ylabel('|Correlation|')
+ax.set_title('Churn correlations')
+#ax.set_xticks(ind + width / 2)
+ax.set_xticklabels(( '','margin_gross_pow_ele', '','date_activ','', 'cons_12m','', 'date_modif'))
 ax.grid()
-
-plt.savefig('KBest.png')
-plt.savefig('Kbest.pdf')
-
+plt.savefig('Churn_corr.png')
+plt.savefig('Churn_corr.pdf')
 
 
 
+# Churn channel_sales correlations
+df_ch_0 = dataset[dataset.channel_sales_0 == 1]
+df_ch_1 = dataset[dataset.channel_sales_1 == 1]
+df_ch_2 = dataset[dataset.channel_sales_2 == 1]
+df_ch_3 = dataset[dataset.channel_sales_3 == 1]
+N_ch_0 = len(df_ch_0)
+N_ch_1 = len(df_ch_1)
+N_ch_2 = len(df_ch_2)
+N_ch_3 = len(df_ch_3)
+N_tot_users = N_ch_0 + N_ch_1 + N_ch_2 + N_ch_3
+Ch_0_churn = len(df_ch_0[df_ch_0.churn==1])
+Ch_1_churn = len(df_ch_1[df_ch_1.churn==1])
+Ch_2_churn = len(df_ch_2[df_ch_2.churn==1])
+Ch_3_churn = len(df_ch_3[df_ch_3.churn==1])
+N_tot_churn = Ch_0_churn+Ch_1_churn+Ch_2_churn+Ch_3_churn
+fig, ax = plt.subplots()
+ind = np.arange(5)
+width = 0.2 
+rects1 = ax.bar(1-0.5*width, 100.0*Ch_0_churn/N_ch_0, width, color='r',label='Churns per channel')
+rects1 = ax.bar(2-0.5*width, 100.0*Ch_1_churn/N_ch_1, width, color='r')
+rects1 = ax.bar(3-0.5*width, 100.0*Ch_2_churn/N_ch_2, width, color='r')
+rects1 = ax.bar(4-0.5*width, 100.0*Ch_3_churn/N_ch_3, width, color='r')
+rects1 = ax.bar(1+0.5*width, 100.0*Ch_0_churn/N_tot_churn, width, color='g',label='Churns per total')
+rects1 = ax.bar(2+0.5*width, 100.0*Ch_1_churn/N_tot_churn, width, color='g')
+rects1 = ax.bar(3+0.5*width, 100.0*Ch_2_churn/N_tot_churn, width, color='g')
+rects1 = ax.bar(4+0.5*width, 100.0*Ch_3_churn/N_tot_churn, width, color='g')
+rects1 = ax.bar(1+1.5*width, 100.0*N_ch_0/N_tot_users, width, color='b',label='Sales per total')
+rects1 = ax.bar(2+1.5*width, 100.0*N_ch_1/N_tot_users, width, color='b')
+rects1 = ax.bar(3+1.5*width, 100.0*N_ch_2/N_tot_users, width, color='b')
+rects1 = ax.bar(4+1.5*width, 100.0*N_ch_3/N_tot_users, width, color='b')
+ax.legend(loc="upper right")
+ax.set_ylabel('[%]')
+ax.set_title('Sales channel analysis')
+ax.set_xticks(ind + width / 2)
+ax.set_xticklabels(( '','Chan A', 'Chan B', 'Chan C', 'Chan D'))
+ax.grid()
+plt.savefig('Churn_per_channel.png')
+plt.savefig('Churn_per_channelr.pdf')
+
+# Churn origin correlations
+df_ch_0 = dataset[dataset.origin_up_kamkkxfxxuwbdslkwifmmcsiusiuosws == 1]
+df_ch_1 = dataset[dataset.origin_up_ldkssxwpmemidmecebumciepifcamkci == 1]
+df_ch_2 = dataset[dataset.origin_up_lxidpiddsbxsbosboudacockeimpuepw == 1]
+N_ch_0 = len(df_ch_0)
+N_ch_1 = len(df_ch_1)
+N_ch_2 = len(df_ch_2)
+N_tot_users = N_ch_0 + N_ch_1 + N_ch_2 
+Ch_0_churn = len(df_ch_0[df_ch_0.churn==1])
+Ch_1_churn = len(df_ch_1[df_ch_1.churn==1])
+Ch_2_churn = len(df_ch_2[df_ch_2.churn==1])
+N_tot_churn = Ch_0_churn+Ch_1_churn+Ch_2_churn
+fig, ax = plt.subplots()
+ind = np.arange(4)
+width = 0.2 
+rects1 = ax.bar(1-0.5*width, 100.0*Ch_0_churn/N_ch_0, width, color='r',label='Churns per campaign')
+rects1 = ax.bar(2-0.5*width, 100.0*Ch_1_churn/N_ch_1, width, color='r')
+rects1 = ax.bar(3-0.5*width, 100.0*Ch_2_churn/N_ch_2, width, color='r')
+rects1 = ax.bar(1+0.5*width, 100.0*Ch_0_churn/N_tot_churn, width, color='g',label='Churns per total')
+rects1 = ax.bar(2+0.5*width, 100.0*Ch_1_churn/N_tot_churn, width, color='g')
+rects1 = ax.bar(3+0.5*width, 100.0*Ch_2_churn/N_tot_churn, width, color='g')
+rects1 = ax.bar(1+1.5*width, 100.0*N_ch_0/N_tot_users, width, color='b',label='Sales per campaign')
+rects1 = ax.bar(2+1.5*width, 100.0*N_ch_1/N_tot_users, width, color='b')
+rects1 = ax.bar(3+1.5*width, 100.0*N_ch_2/N_tot_users, width, color='b')
+ax.legend(loc="upper left")
+ax.set_ylabel('[%]')
+ax.set_title('Campaign analysis')
+ax.set_xticks(ind + width / 2)
+ax.set_xticklabels(( '','Campaign A', 'Campaign B', 'Campaign C'))
+ax.grid()
+plt.xlim([0.5,3.5])
+plt.savefig('Churn_per_Campaign.png')
+plt.savefig('Churn_per_Campaign.pdf')
 
 
-if False:
-    
-    # Recursive Feature selection
-    from sklearn.feature_selection import RFE
-    rfe = RFE(classifier, 3)
-    fit = rfe.fit(X_norm, y)
-    print("Num Features: %d") % fit.n_features_
-    print("Selected Features: %s") % fit.support_
-    print("Feature Ranking: %s") % fit.ranking_
-    
-    
-    # Feature importance
-    print(classifier.feature_importances_)    
-    
-    
-    # Recursive plot
-    from sklearn.model_selection import StratifiedKFold
-    from sklearn.feature_selection import RFECV
-    rfecv = RFECV(estimator=classifier, step=1, cv=StratifiedKFold(2),
-                 scoring='accuracy')
-    rfecv.fit(X, y)
-    print("Optimal number of features : %d" % rfecv.n_features_)
-    # Plot number of features VS. cross-validation scores
-    plt.figure()
-    plt.xlabel("Number of features selected")
-    plt.ylabel("Cross validation score (nb of correct classifications)")
-    plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
-    plt.show()
 
 
 
 
-# PCA
-#from sklearn.decomposition import PCA
-#pca = PCA(n_components=3)
-#fit = pca.fit(X_norm)
-# summarize components
-#print("Explained Variance: %s") % fit.explained_variance_ratio_
-#print(fit.components_)
+
 
 
 
