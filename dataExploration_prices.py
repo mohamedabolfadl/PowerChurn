@@ -1,19 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Jul 09 23:06:34 2017
-
+Script to preprocess the features and prepare them for learning
 @author: Moh2
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jul 07 22:52:15 2017
-
-@author: Moh2
-
-Purpose: Explore the data types and consistencies
-
-"""
 
 # Data Preprocessing Template
 
@@ -158,9 +149,9 @@ def fillPrices(dataset,dataset_prices,legend):
         dataset.set_value(index, 'price_p3_fix',av_vec[5] )
         
         
-        
+# This section takes some time. Run it ONLY if 'dataset_with_prices.csv' has not been previously generated
 # Reading out the feature file and price file and adding the price features to the feature file        
-if False:        
+if False:         
     # Importing the dataset
     dataset_prices = pd.read_csv('ml_case_training_hist_data.csv')
     dataset = pd.read_csv('ml_case_training_data.csv')
@@ -191,6 +182,7 @@ if False:
 
 dataset = pd.read_csv('dataset_with_prices.csv')
 dataset_result = pd.read_csv('ml_case_training_output.csv')
+churns_rate_2015 = 100.0*float(len(dataset_result[dataset_result['churn']==1]))/ float(len(dataset_result[dataset_result['churn']==1])+len(dataset_result[dataset_result['churn']==0]))
 
 # Collecting categorial data
 collectCompanyIDS(dataset)
@@ -352,228 +344,106 @@ dataset_channel_sales_predict_gas_origin = pd.get_dummies(dataset_channel_sales_
 
 
 
-if True:
-    # Average out missing data
-    from sklearn.preprocessing import Imputer
-    imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
-    X_r = dataset_channel_sales_training_gas_origin.iloc[:, 1:].values
-    # Deleting churn column
-    X = np.delete(X_r,32,1)
-    
-    y = dataset_channel_sales_training_gas_origin.iloc[:, 0].values
-    
-    X_predict_r = dataset_channel_sales_predict_gas_origin.iloc[:, 1:].values
-    X_predict = np.delete(X_predict_r,32,1)
-    
-    
-    
-    
-    imputer = imputer.fit(X[:, 1:33])
-    X[:, 1:33] = imputer.transform(X[:, 1:33])
-    
-    imputer = imputer.fit(X_predict[:, 1:33])
-    X_predict[:, 1:33] = imputer.transform(X_predict[:, 1:33])
-    
-    
 
-    
-    from sklearn.preprocessing import LabelEncoder
-    labelencoder_y = LabelEncoder()
-    y = labelencoder_y.fit_transform(y)
-    
-    from sklearn.cross_validation import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
-    
-    from sklearn.preprocessing import StandardScaler
-    sc = StandardScaler()
-    X_train = sc.fit_transform(X_train)
-    X_test = sc.transform(X_test)
-    X_predict = sc.transform(X_predict)
-    
-    from sklearn.neighbors import KNeighborsClassifier
-    from sklearn.metrics import confusion_matrix, accuracy_score
-    
-    classifier1 = KNeighborsClassifier(n_neighbors = 4, metric = 'minkowski', p = 1)
-    classifier1.fit(X_train, y_train)
-    y_pred1 = classifier1.predict(X_train)
-    cm1 = confusion_matrix(y_train, y_pred1)
-    print 'Model 1 : '+str(accuracy_score(y_train, y_pred1))+' model = ('+str(4)+','+str(1)+')'
-     
-    classifier2 = KNeighborsClassifier(n_neighbors = 2, metric = 'minkowski', p = 1)
-    classifier2.fit(X_train, y_train)
-    y_pred2 = classifier2.predict(X_train)
-    cm2 = confusion_matrix(y_train, y_pred2)
-    print 'Model 2 : '+str(accuracy_score(y_train, y_pred2))+' model = ('+str(2)+','+str(1)+')'
-    
-    classifier3 = KNeighborsClassifier(n_neighbors = 3, metric = 'minkowski', p = 1)
-    classifier3.fit(X_train, y_train)
-    y_pred3 = classifier3.predict(X_train)
-    cm3 = confusion_matrix(y_train, y_pred3)
-    print 'Model 3 : '+str(accuracy_score(y_train, y_pred3))+' model = ('+str(3)+','+str(1)+')'
-    
-    classifier4 = KNeighborsClassifier(n_neighbors = 4, metric = 'minkowski', p = 2)
-    classifier4.fit(X_train, y_train)
-    y_pred4 = classifier4.predict(X_train)
-    cm4 = confusion_matrix(y_train, y_pred4)
-    print 'Model 4 : '+str(accuracy_score(y_train, y_pred4))+' model = ('+str(4)+','+str(2)+')'
-    
-    classifier5 = KNeighborsClassifier(n_neighbors = 2, metric = 'minkowski', p = 2)
-    classifier5.fit(X_train, y_train)
-    y_pred5 = classifier5.predict(X_train)
-    cm5 = confusion_matrix(y_train, y_pred5)
-    print 'Model 5 : '+str(accuracy_score(y_train, y_pred5))+' model = ('+str(2)+','+str(2)+')'
-      
-    classifier6 = KNeighborsClassifier(n_neighbors = 3, metric = 'minkowski', p = 2)
-    classifier6.fit(X_train, y_train)
-    y_pred6 = classifier6.predict(X_train)
-    cm6 = confusion_matrix(y_train, y_pred6)
-    print 'Model 6 : '+str(accuracy_score(y_train, y_pred6))+' model = ('+str(3)+','+str(2)+')'
-        
-    # Predicted channel sales using best classifier 
-    y_predict = classifier2.predict(X_predict)
-            
-            
-    # Remove old channel sales with 0 value which is NaN        
-    dataset_channel_sales_predict_gas_origin.drop('channel_sales', axis=1, inplace=True)
-    # Remove old hashes to be replaced with their integer labels
-    dataset_channel_sales_training_gas_origin.drop('channel_sales', axis=1, inplace=True)
-        
-    # Merge predicted sales_channel
-    dataset_channel_sales_predict_gas_origin['channel_sales'] = pd.Series(y_predict, index=dataset_channel_sales_predict_gas_origin.index)
-    dataset_channel_sales_training_gas_origin['channel_sales'] = pd.Series(y, index=dataset_channel_sales_training_gas_origin.index)
+# Average out missing data
+from sklearn.preprocessing import Imputer
+imputer = Imputer(missing_values = 'NaN', strategy = 'mean', axis = 0)
+X_r = dataset_channel_sales_training_gas_origin.iloc[:, 1:].values
+# Deleting churn column
+X = np.delete(X_r,32,1)
 
-    # Creat dummy of the channel_sales
-    #dataset_channel_sales_predict_gas_origin = pd.get_dummies(dataset_channel_sales_predict_gas_origin, columns=['channel_sales'])    
-    #dataset_channel_sales_training_gas_origin = pd.get_dummies(dataset_channel_sales_training_gas_origin, columns=['channel_sales'])    
+y = dataset_channel_sales_training_gas_origin.iloc[:, 0].values
 
-    # Complete dataset    
-    dataset_merged = dataset_channel_sales_training_gas_origin.append(dataset_channel_sales_predict_gas_origin)
-    dataset_complete = pd.get_dummies(dataset_merged, columns=['channel_sales'])     
-    
-    dataset_complete.to_csv('ml_case_training_data_cleaned.csv', index=False)    
-    
-    
-    
-    
-    
-    #dataset_cleaned_dummy_gas = pd.get_dummies(dataset_cleaned, columns=['has_gas'])    
-    #dataset_cleaned_dummy_gas_channel = pd.get_dummies(dataset_cleaned_dummy_gas, columns=['channel_sales'])    
-    #dataset_encoded = pd.get_dummies(dataset_cleaned_dummy_gas_channel, columns=['origin_up'])    
-    #
-    #
-    #    
-    #X = dataset_cleaned.iloc[:, :-1].values
-    #y = dataset_cleaned.iloc[:, 31].values
-    #    
-    #from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-    #labelencoder_X = LabelEncoder()
-    #    
-    ## Encoding if user has gas or not
-    #X[:, 22] = labelencoder_X.fit_transform(X[:, 22])
-    #
-    #X[:, 2] = labelencoder_X.fit_transform(X[:, 2])
-    #onehotencoder = OneHotEncoder(categorical_features = [2])
-    #X = onehotencoder.fit_transform(X).toarray()
-    #
-    ## Encoding the Dependent Variable
-    #labelencoder_y = LabelEncoder()
-    #y = labelencoder_y.fit_transform(y)
-    
-    
-    
-
-if False:
-    # Transforming dates to time in days
-    transformDates(dataset_cleaned)
-    
-    # Dropping campaign_disc_ele since it is only NaN
-    dataset_cleaned.drop('campaign_disc_ele', axis=1, inplace=True)
-    
-    X = dataset_cleaned.iloc[:, :-1].values
-    y = dataset_cleaned.iloc[:, 31].values
-    
-    from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-    labelencoder_X = LabelEncoder()
-    
-    
-    
-    # Encoding if user has gas or not
-    X[:, 22] = labelencoder_X.fit_transform(X[:, 22])
-    onehotencoder = OneHotEncoder(categorical_features = [22])
-    X = onehotencoder.fit_transform(X).toarray()
-    # Encoding the Dependent Variable
-    labelencoder_y = LabelEncoder()
-    y = labelencoder_y.fit_transform(y)
-    
-    
-    # Encoding sales channel
-    X[:, 3] = labelencoder_X.fit_transform(X[:, 3])
-    # Analytics of sales channel with 8 channels
-    plt.figure()
-    plt.hist(X[:, 3],bins=[0,1,2,3,4,5,6,7,8])
-    plt.title("Sales channel")
-    plt.xlabel("Sales channel")
-    plt.ylabel("Amount")
-    fig = plt.gcf()
-    
-    
-    
-    # Encodingif number of electricity campaigns 
-    X[:, 30] = labelencoder_X.fit_transform(X[:, 30])
-    # Analytics of sales channel with 6 campaigns
-    plt.figure()
-    plt.hist(X[:, 30],bins=[0,1,2,3,4,5,6,7])
-    plt.title("Electricity campaign")
-    plt.xlabel("Campaign ID")
-    plt.ylabel("Amount")
-
-
-    # Encoding company category
-    X[:, 1] = labelencoder_X.fit_transform(X[:, 1])
-    # Analytics of Gas
-    plt.hist(X[:, 1], bins=420)
-    plt.title("Company category")
-    plt.xlabel("Category ID")
-    plt.ylabel("Amount")
-    fig = plt.gcf()
+X_predict_r = dataset_channel_sales_predict_gas_origin.iloc[:, 1:].values
+X_predict = np.delete(X_predict_r,32,1)
 
 
 
 
+imputer = imputer.fit(X[:, 1:33])
+X[:, 1:33] = imputer.transform(X[:, 1:33])
 
-
-
-    collectCompanyIDS(dataset)
-    print 'Customers: '+str(len(customer_IDS))
-    print 'Company categories: '+str(len(company_IDS))
-    print 'Channel sales: '+str(len(channel_IDS))
-    print 'Number of electricty campaigns: '+str(len(origin_IDS))
-    
+imputer = imputer.fit(X_predict[:, 1:33])
+X_predict[:, 1:33] = imputer.transform(X_predict[:, 1:33])
 
 
 
 
-"""
-X = dataset.iloc[:, :-1].values
-y = dataset.iloc[:, 3].values
+from sklearn.preprocessing import LabelEncoder
+labelencoder_y = LabelEncoder()
+y = labelencoder_y.fit_transform(y)
 
-# Splitting the dataset into the Training set and Test set
 from sklearn.cross_validation import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
-# Feature Scaling
 from sklearn.preprocessing import StandardScaler
-sc_X = StandardScaler()
-X_train = sc_X.fit_transform(X_train)
-X_test = sc_X.transform(X_test)
-sc_y = StandardScaler()
-y_train = sc_y.fit_transform(y_train)"""
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+X_predict = sc.transform(X_predict)
 
-#            print row['campaign_disc_ele']
-#        if not math.isnan(row['campaign_disc_ele']):
-#        row['campaign_disc_ele'] != nan:
-       # if index<10:
-        #    print row['campaign_disc_ele']
-#        if ds['campaign_disc_ele'] != NaN:
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score
 
+classifier1 = KNeighborsClassifier(n_neighbors = 4, metric = 'minkowski', p = 1)
+classifier1.fit(X_train, y_train)
+y_pred1 = classifier1.predict(X_train)
+cm1 = confusion_matrix(y_train, y_pred1)
+print 'Model 1 : '+str(accuracy_score(y_train, y_pred1))+' model = ('+str(4)+','+str(1)+')'
+ 
+classifier2 = KNeighborsClassifier(n_neighbors = 2, metric = 'minkowski', p = 1)
+classifier2.fit(X_train, y_train)
+y_pred2 = classifier2.predict(X_train)
+cm2 = confusion_matrix(y_train, y_pred2)
+print 'Model 2 : '+str(accuracy_score(y_train, y_pred2))+' model = ('+str(2)+','+str(1)+')'
 
+classifier3 = KNeighborsClassifier(n_neighbors = 3, metric = 'minkowski', p = 1)
+classifier3.fit(X_train, y_train)
+y_pred3 = classifier3.predict(X_train)
+cm3 = confusion_matrix(y_train, y_pred3)
+print 'Model 3 : '+str(accuracy_score(y_train, y_pred3))+' model = ('+str(3)+','+str(1)+')'
+
+classifier4 = KNeighborsClassifier(n_neighbors = 4, metric = 'minkowski', p = 2)
+classifier4.fit(X_train, y_train)
+y_pred4 = classifier4.predict(X_train)
+cm4 = confusion_matrix(y_train, y_pred4)
+print 'Model 4 : '+str(accuracy_score(y_train, y_pred4))+' model = ('+str(4)+','+str(2)+')'
+
+classifier5 = KNeighborsClassifier(n_neighbors = 2, metric = 'minkowski', p = 2)
+classifier5.fit(X_train, y_train)
+y_pred5 = classifier5.predict(X_train)
+cm5 = confusion_matrix(y_train, y_pred5)
+print 'Model 5 : '+str(accuracy_score(y_train, y_pred5))+' model = ('+str(2)+','+str(2)+')'
+  
+classifier6 = KNeighborsClassifier(n_neighbors = 3, metric = 'minkowski', p = 2)
+classifier6.fit(X_train, y_train)
+y_pred6 = classifier6.predict(X_train)
+cm6 = confusion_matrix(y_train, y_pred6)
+print 'Model 6 : '+str(accuracy_score(y_train, y_pred6))+' model = ('+str(3)+','+str(2)+')'
+    
+# Predicted channel sales using best classifier 
+y_predict = classifier2.predict(X_predict)
+        
+        
+# Remove old channel sales with 0 value which is NaN        
+dataset_channel_sales_predict_gas_origin.drop('channel_sales', axis=1, inplace=True)
+# Remove old hashes to be replaced with their integer labels
+dataset_channel_sales_training_gas_origin.drop('channel_sales', axis=1, inplace=True)
+    
+# Merge predicted sales_channel
+dataset_channel_sales_predict_gas_origin['channel_sales'] = pd.Series(y_predict, index=dataset_channel_sales_predict_gas_origin.index)
+dataset_channel_sales_training_gas_origin['channel_sales'] = pd.Series(y, index=dataset_channel_sales_training_gas_origin.index)
+
+# Creat dummy of the channel_sales
+#dataset_channel_sales_predict_gas_origin = pd.get_dummies(dataset_channel_sales_predict_gas_origin, columns=['channel_sales'])    
+#dataset_channel_sales_training_gas_origin = pd.get_dummies(dataset_channel_sales_training_gas_origin, columns=['channel_sales'])    
+
+# Complete dataset    
+dataset_merged = dataset_channel_sales_training_gas_origin.append(dataset_channel_sales_predict_gas_origin)
+dataset_complete = pd.get_dummies(dataset_merged, columns=['channel_sales'])     
+
+dataset_complete.to_csv('ml_case_training_data_cleaned.csv', index=False)    
+    
+    
+    
+    
