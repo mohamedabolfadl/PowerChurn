@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jul 10 16:32:06 2017
-
+Script to demonstrate the gains in revenue when using the optimal discount
 @author: m00760171
 """
 
@@ -18,27 +18,20 @@ lr_col='mediumpurple'
 nb_col='darkorchid'
 knn_col='plum'
 svm_col='blue'
-#p = 0.11 # Fraction of volume who will churn
-#d = 0.2  # Discount
-
 #acceptance_kernel = 'quad'
-p_a_m = 5 # relationship between dicount provided and probability of accepting it  
-N_feat = 10 # Select top N_feat features
+p_a_m = 5 # relationship between dicount provided and probability of accepting it 20% -> 100% acceptance, hence the slope is 5 
 
 
-
+# Acceptance probability of user for a given discount
 def acceptProb(d,acceptance_kernel):
-    
     if acceptance_kernel == 'lin':    
         return p_a_m*d
     else:
         return -(1/ (0.2*0.2))*(d-0.2)**2+1
 
+# Plot ROC
 def plotROC(y_test, y_score_l,label,col,p,d,plotFlag, kern):
-    
- #   y_score = np.array(y_score_l[:,1])
     y_score = np.array(y_score_l)
-
     y_test = np.array(y_test)
     fpr = dict()
     tpr = dict()
@@ -49,14 +42,10 @@ def plotROC(y_test, y_score_l,label,col,p,d,plotFlag, kern):
     y_thresh = ((1-p)/p)*(d/(1-d))*x_arr
     lw = 1
     if plotFlag:
-    # , color=col
-        #plt.subplot(1,2,1)
-        #fig, ax = plt.subplots()
         plt.plot(fpr, tpr,
                  lw=lw, label=label + ' (area = %0.2f)' % roc_auc)
         plt.plot(x_arr,y_thresh,lw=1,color='r', linestyle='--',label='Margin '+'(p:'+str(100*p)+'%,d:'+str(100*d)+'%)')
         plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-        #ax.fill_between(x_arr, tpr, y_thresh)
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.0])
         plt.xlabel('False Positive Rate')
@@ -85,9 +74,6 @@ def plotROC(y_test, y_score_l,label,col,p,d,plotFlag, kern):
         plt.legend(loc="lower right")
         #plt.title('Effectiveness of model')
         plt.grid()
-    print("--------------------------")
-    print("Discount = "+str(100.0*d)+" %")
-    print("Max improvement = "+str(max(S_improvement)))
     return max(S_improvement)
     
 
@@ -96,7 +82,7 @@ def plotROC(y_test, y_score_l,label,col,p,d,plotFlag, kern):
 # Importing the dataset
 dataset = pd.read_csv('ml_case_training_data_cleaned.csv')
 slct_inds = [0,12,3,15,21,23,4,26,6,20,2,7,25,16,13,5,19,29,27,10,28,17,1,11,30,24,31,8,18,22,9,34,38,36,33,40,39,32,35,14,37]
-
+N_feat = len(slct_inds)-10 # Select top N_feat features
 X = dataset.iloc[:, slct_inds].values
 X = X[:,0:N_feat]
 y = dataset.iloc[:, 32].values
@@ -110,8 +96,6 @@ X[:, 1:32] = imputer.transform(X[:, 1:32])
 
 # Splitting the dataset into the Training set and Test set
 from sklearn.cross_validation import train_test_split
-#from sklearn.model_selection import train_test_split
-
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
 # Feature Scaling
@@ -121,25 +105,20 @@ X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
 #Random Forest
-if False:
+if True:
     # Fitting Random Forest Classification to the Training set
     from sklearn.ensemble import RandomForestClassifier
-    classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
+    classifier = RandomForestClassifier(n_estimators = 700, criterion = 'entropy', random_state = 0)
     classifier.fit(X_train, y_train)
-    #y_conf_1 = classifier.decision_function(X_test)
     y_conf_2 = classifier.predict_proba(X_test)
     y_conf_2 = y_conf_2[:,1]
-    # Predicting the Test set results
     y_pred = classifier.predict(X_test)
-    # Making the Confusion Matrix
     from sklearn.metrics import confusion_matrix, accuracy_score
     cm = confusion_matrix(y_test, y_pred)
     name = "RF"
-    #print('Random Forest accuracy = ' + str(100.0*accuracy_score(y_test, y_pred)))
-    # ------- ROC plot
 
 # NN
-if True:
+if False:
     import keras
     from keras.models import Sequential
     from keras.layers import Dense
@@ -159,11 +138,8 @@ if False:
     from sklearn.svm import SVC
     classifier = SVC(kernel = 'rbf', random_state = 0, probability = True)
     classifier.fit(X_train, y_train)
-    # Getting confideence per user
     y_conf_2 = classifier.predict_proba(X_test)
-    # Predicting the Test set results
     y_pred = classifier.predict(X_test)
-    # Making the Confusion Matrix
     from sklearn.metrics import confusion_matrix, accuracy_score
     cm = confusion_matrix(y_test, y_pred)
     accuracy_score(y_test, y_pred)
@@ -174,7 +150,7 @@ if False:
 
 
 
-
+# Linear and quadratic acceptance probability profiles
 plt.figure()
 plt.plot( np.linspace(0,20,40) ,  acceptProb(np.linspace(0,0.2,40),'lin'), label='Linear kernel'  )
 plt.plot( np.linspace(0,20,40) ,  acceptProb(np.linspace(0,0.2,40),'quad')  , label='Quadtratic kernel')
@@ -182,12 +158,14 @@ plt.xlabel("Discount [%]")
 plt.ylabel("Acceptance probability")
 plt.grid()
 
+# Plot the ROC curve
 plt.figure()
 plotROC(y_test, y_conf_2,name,rf_col,p=0.11,d=0.2,plotFlag = True, kern ='lin')
 
+# Plot the sales improvement for different discounts and churns
 plt.figure()
 discount_vec = np.linspace(0.01,0.2,num=100)
-churn_vec = np.array([0.05,0.11,0.15,0.2])
+churn_vec = np.array([0.05,0.1,0.15,0.2])
 for j in range(len(churn_vec)):
 
     improvement_vs_discount = []
@@ -206,11 +184,6 @@ plt.show()
 plt.grid()
 plt.legend(loc="upper left")  
 
-    
-    
-    
-
-    
     
     
     
