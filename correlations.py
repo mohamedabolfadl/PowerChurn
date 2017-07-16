@@ -1,13 +1,9 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jul 11 11:48:38 2017
-
-@author: m00760171
-"""
 
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 11 11:34:32 2017
+Script to find the correlations among features and cross correlation between features and churn
+Writes Correlations.csv and Correlations_churn.csv
 
 @author: m00760171
 """
@@ -18,8 +14,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
-#plt.figure()
 
 # Importing the dataset
 dataset = pd.read_csv('ml_case_training_data_cleaned.csv')
@@ -98,17 +92,17 @@ df_churn.to_csv('Correlations_churn.csv', index=True)
 fig, ax = plt.subplots()
 ind = np.arange(5)
 width = 0.2 
-rects1 = ax.bar(1, 0.0809, width, color='b')
-rects2 = ax.bar(2, 0.0736, width, color='r')
-rects3 = ax.bar(3, 0.0519, width, color='r')
-rects4 = ax.bar(4, 0.0503, width, color='r')
+rects1 = ax.bar(1-width/2, 0.0809, width, color='b')
+rects2 = ax.bar(2-width/2, 0.0736, width, color='r')
+rects3 = ax.bar(3-width/2, 0.0519, width, color='r')
+rects4 = ax.bar(4-width/2, 0.0503, width, color='r')
 ax.set_ylabel('|Correlation|')
 ax.set_title('Churn correlations')
+#plt.xlim([0,5])
 #ax.set_xticks(ind + width / 2)
 ax.set_xticklabels(( '','margin_gross_pow_ele', '','date_activ','', 'cons_12m','', 'date_modif'))
 ax.grid()
-plt.savefig('Churn_corr.png')
-plt.savefig('Churn_corr.pdf')
+
 
 
 
@@ -130,26 +124,25 @@ N_tot_churn = Ch_0_churn+Ch_1_churn+Ch_2_churn+Ch_3_churn
 fig, ax = plt.subplots()
 ind = np.arange(5)
 width = 0.2 
-rects1 = ax.bar(1-0.5*width, 100.0*Ch_0_churn/N_ch_0, width, color='r',label='Churns per channel')
-rects1 = ax.bar(2-0.5*width, 100.0*Ch_1_churn/N_ch_1, width, color='r')
-rects1 = ax.bar(3-0.5*width, 100.0*Ch_2_churn/N_ch_2, width, color='r')
-rects1 = ax.bar(4-0.5*width, 100.0*Ch_3_churn/N_ch_3, width, color='r')
-rects1 = ax.bar(1+0.5*width, 100.0*Ch_0_churn/N_tot_churn, width, color='g',label='Churns per total')
-rects1 = ax.bar(2+0.5*width, 100.0*Ch_1_churn/N_tot_churn, width, color='g')
-rects1 = ax.bar(3+0.5*width, 100.0*Ch_2_churn/N_tot_churn, width, color='g')
-rects1 = ax.bar(4+0.5*width, 100.0*Ch_3_churn/N_tot_churn, width, color='g')
-rects1 = ax.bar(1+1.5*width, 100.0*N_ch_0/N_tot_users, width, color='b',label='Sales per total')
-rects1 = ax.bar(2+1.5*width, 100.0*N_ch_1/N_tot_users, width, color='b')
-rects1 = ax.bar(3+1.5*width, 100.0*N_ch_2/N_tot_users, width, color='b')
-rects1 = ax.bar(4+1.5*width, 100.0*N_ch_3/N_tot_users, width, color='b')
+rects1 = ax.bar(1-1*width, 100.0*Ch_0_churn/N_ch_0, width, color='r',label='Churns per channel')
+rects1 = ax.bar(2-1*width, 100.0*Ch_1_churn/N_ch_1, width, color='r')
+rects1 = ax.bar(3-1*width, 100.0*Ch_2_churn/N_ch_2, width, color='r')
+rects1 = ax.bar(4-1*width, 100.0*Ch_3_churn/N_ch_3, width, color='r')
+rects1 = ax.bar(1+0*width, 100.0*Ch_0_churn/N_tot_churn, width, color='g',label='Churns per total')
+rects1 = ax.bar(2+0*width, 100.0*Ch_1_churn/N_tot_churn, width, color='g')
+rects1 = ax.bar(3+0*width, 100.0*Ch_2_churn/N_tot_churn, width, color='g')
+rects1 = ax.bar(4+0*width, 100.0*Ch_3_churn/N_tot_churn, width, color='g')
+rects1 = ax.bar(1+1.0*width, 100.0*N_ch_0/N_tot_users, width, color='b',label='Sales per total')
+rects1 = ax.bar(2+1.0*width, 100.0*N_ch_1/N_tot_users, width, color='b')
+rects1 = ax.bar(3+1.0*width, 100.0*N_ch_2/N_tot_users, width, color='b')
+rects1 = ax.bar(4+1.0*width, 100.0*N_ch_3/N_tot_users, width, color='b')
 ax.legend(loc="upper right")
 ax.set_ylabel('[%]')
 ax.set_title('Sales channel analysis')
 ax.set_xticks(ind + width / 2)
 ax.set_xticklabels(( '','Chan A', 'Chan B', 'Chan C', 'Chan D'))
 ax.grid()
-plt.savefig('Churn_per_channel.png')
-plt.savefig('Churn_per_channelr.pdf')
+
 
 # Churn origin correlations
 df_ch_0 = dataset[dataset.origin_up_kamkkxfxxuwbdslkwifmmcsiusiuosws == 1]
@@ -182,10 +175,6 @@ ax.set_xticks(ind + width / 2)
 ax.set_xticklabels(( '','Campaign A', 'Campaign B', 'Campaign C'))
 ax.grid()
 plt.xlim([0.5,3.5])
-plt.savefig('Churn_per_Campaign.png')
-plt.savefig('Churn_per_Campaign.pdf')
-
-
 
 
 
