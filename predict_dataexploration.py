@@ -4,7 +4,7 @@ Created on Fri Jul 07 22:52:15 2017
 
 @author: Moh2
 
-Purpose: Explore the data types and consistencies
+Read test dataset and training set and writes 'ml_case_test_data_cleaned.csv'
 
 """
 
@@ -14,7 +14,6 @@ Purpose: Explore the data types and consistencies
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import math
 from datetime import datetime
 import re
 
@@ -169,11 +168,8 @@ legend = dataset_prices.iloc[:, 8].values
 fillPrices(dataset,dataset_prices,legend) # 4:30 mins
 
             
-# Importing the dataset
-#dataset_orig = pd.read_csv('ml_case_test_data.csv')
-#dataset = dataset_orig
+
 print("Number of users =" + str(len(dataset)))
-#dataset_result = pd.read_csv('ml_case_test_output.csv')
 
 # Collecting categorial data
 collectCompanyIDS(dataset)
@@ -203,14 +199,12 @@ dataset_channel_sales_training = dataset_cleaned[dataset_cleaned.channel_sales !
 dataset_channel_sales_predict = dataset_cleaned[dataset_cleaned.channel_sales == 0]
 
 # Dropping useless columns
-#dataset_channel_sales_training.drop('id', axis=1, inplace=True)
-#dataset_channel_sales_training.drop('churn', axis=1, inplace=True)
+
 dataset_channel_sales_training.drop('id_code', axis=1, inplace=True)
 dataset_channel_sales_training_gas = pd.get_dummies(dataset_channel_sales_training, columns=['has_gas'])    
 dataset_channel_sales_training_gas_origin = pd.get_dummies(dataset_channel_sales_training_gas, columns=['origin_up'])    
 
-#dataset_channel_sales_predict.drop('id', axis=1, inplace=True)
-#dataset_channel_sales_predict.drop('churn', axis=1, inplace=True)
+
 dataset_channel_sales_predict.drop('id_code', axis=1, inplace=True)
 dataset_channel_sales_predict_gas = pd.get_dummies(dataset_channel_sales_predict, columns=['has_gas'])    
 dataset_channel_sales_predict_gas_origin = pd.get_dummies(dataset_channel_sales_predict_gas, columns=['origin_up']) 
@@ -306,7 +300,6 @@ dataset_merged = dataset_channel_sales_training_gas_origin.append(dataset_channe
 dataset_complete = pd.get_dummies(dataset_merged, columns=['channel_sales'])     
 
 # Dropping columns which do not exist in training set
-#dataset_complete.drop('id_code', axis=1, inplace=True)
 dataset_complete.drop('origin_up_aabpopmuoobccoxasfsksebxoxffdcxs', axis=1, inplace=True)
 dataset_complete.drop('channel_sales_4', axis=1, inplace=True)
 dataset_complete.drop('channel_sales_5', axis=1, inplace=True)
@@ -315,33 +308,6 @@ dataset_complete.drop('channel_sales_6', axis=1, inplace=True)
 dataset_complete.to_csv('ml_case_test_data_cleaned.csv', index=False)  
 
 
-#dataset_prices = pd.read_csv('ml_case_test_hist_data.csv')
-##Creating price information columns
-#dataset_complete['price_p1_var'] = pd.Series(np.nan, index=dataset_complete.index)
-#dataset_complete['price_p2_var'] = pd.Series(np.nan, index=dataset_complete.index)
-#dataset_complete['price_p3_var'] = pd.Series(np.nan, index=dataset_complete.index)
-#dataset_complete['price_p1_fix'] = pd.Series(np.nan, index=dataset_complete.index)
-#dataset_complete['price_p2_fix'] = pd.Series(np.nan, index=dataset_complete.index)
-#dataset_complete['price_p3_fix'] = pd.Series(np.nan, index=dataset_complete.index)
-## Extracting customer hash id
-#y = dataset_prices.iloc[:, 0].values
-#y_o = dataset_complete.iloc[:, 0].values
-## Convert hash to integer
-#from sklearn.preprocessing import LabelEncoder
-#labelencoder_y = LabelEncoder()
-#y = labelencoder_y.fit_transform(y)
-#y_o = labelencoder_y.fit_transform(y_o)
-## Insert id_code column to have easier to handle user id
-#dataset_prices['id_code'] = pd.Series(y, index=dataset_prices.index)
-#dataset_complete['id_code'] = pd.Series(y_o, index=dataset_complete.index)
-## Getting a legend of hash to integer for easy access of ids
-#legend = dataset_prices.iloc[:, 8].values
-## Fill the dataset with average the prices per period
-#fillPrices(dataset_complete,dataset_prices,legend) # 4:30 mins
-#dataset_complete.sort_index(inplace=True)
-#dataset_complete.to_csv('ml_case_test_data_cleaned.csv', index=False)
-
-#dataset_complete.to_csv('ml_case_test_data_cleaned.csv', index=False)    
 
 
 
