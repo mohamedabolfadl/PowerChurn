@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul 11 10:48:32 2017
-
-@author: m00760171
-"""
-
-# -*- coding: utf-8 -*-
-"""
 Created on Tue Jul 11 09:03:51 2017
 Function to investigate the correlation between features and output
+Generates 'Feature ranking.csv' which ranks features in terms of relevance to churn
 @author: Moh2
 """
 
@@ -55,31 +49,22 @@ X_test = sc.transform(X_test)
 X_norm = sc.fit_transform(X)
 
 # Fitting Random Forest Classification to the Training set
-if True:
-    from sklearn.ensemble import RandomForestClassifier
-    classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
-    classifier.fit(X_train, y_train)
-    #y_conf_1 = classifier.decision_function(X_test)
-    y_conf_2 = classifier.predict_proba(X_test)
-    # Predicting the Test set results
-    y_pred = classifier.predict(X_test)
-    # Making the Confusion Matrix
-    from sklearn.metrics import confusion_matrix
-    cm = confusion_matrix(y_test, y_pred)
+from sklearn.ensemble import RandomForestClassifier
+classifier = RandomForestClassifier(n_estimators = 10, criterion = 'entropy', random_state = 0)
+classifier.fit(X_train, y_train)
+#y_conf_1 = classifier.decision_function(X_test)
+y_conf_2 = classifier.predict_proba(X_test)
+# Predicting the Test set results
+y_pred = classifier.predict(X_test)
+# Making the Confusion Matrix
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y_test, y_pred)
 
-# Fitting SVM
-if False:
-    from sklearn.svm import SVC
-    classifier = SVC(kernel = 'linear', random_state = 0, probability = False)
-    classifier.fit(X_train, y_train)
 
 
 
 # Recursive Feature selection
 from sklearn.feature_selection import RFE
-from sklearn.model_selection import StratifiedKFold
-from sklearn.feature_selection import RFECV
-# First get feature ranks
 rfe = RFE(classifier, 1)
 fit = rfe.fit(X_norm, y)
 ranks1 = fit.ranking_
@@ -94,6 +79,8 @@ df.to_csv('Feature ranking.csv', index=False)
 
 
 # Iterate with cross validation to pick up the best features
+from sklearn.model_selection import StratifiedKFold
+from sklearn.feature_selection import RFECV
 rfecv = RFECV(estimator=classifier, step=1, cv=StratifiedKFold(2),
              scoring='accuracy')
 rfecv.fit(X_train, y_train)
@@ -115,7 +102,7 @@ from sklearn.metrics import accuracy_score
 accuracy_score(y_test, y_pred)
 
 
-
+# Proves to be a weak indicator of feature power
 if False:
     # K Best based on chi2 or f_classif
     from sklearn.feature_selection import SelectKBest
@@ -151,23 +138,10 @@ if False:
     
 
 
-
+# Available only in Random forest and decision tree
 if False:
     # Feature importance for tree classifiers
-    print(classifier.feature_importances_)    
-
-
-
-    
-    
-
-# PCA
-if False:
-    from sklearn.decomposition import PCA
-    pca = PCA(n_components=3)
-    fit = pca.fit(X_norm)
-    #summarize components
-    print("Explained Variance: %s") % fit.explained_variance_ratio_
-    print(fit.components_)
+    print classifier.feature_importances_
+  
 
 
