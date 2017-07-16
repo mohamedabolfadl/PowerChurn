@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 11 23:20:05 2017
-
+Script to write the result of the trained model
 @author: Moh2
 """
 
 # Importing the libraries
 import numpy as np
 import pandas as pd
+import matplotlib as plt
+from sklearn.metrics import f1_score, brier_score_loss, accuracy_score
 
 test_pred_flag = True
   
@@ -16,10 +18,10 @@ dataset = pd.read_csv('ml_case_training_data_cleaned.csv')
 #Import the predict dataset
 dataset_predict = pd.read_csv('ml_case_test_data_cleaned.csv')
 
-# Number of features
-N_feat = 30 # Select top N_feat features
 # Indices of optimal features from most significant to least
-slct_inds = [0,12,3,15,21,23,4,26,6,20,2,7,25,16,13,5,19,29,27,10,28,17,1,11,30,24,31,8,18,22,9,34,38,36,33,40,41,39,35,14,37]
+slct_inds = [0,12,3,15,21,23,4,26,6,20,2,7,25,16,13,5,19,29,27,10,28,17,1,11,30,24,31,8,18,22,9,34,38,36,33,40,39,35,14,37]
+N_feat = len(slct_inds)-10 # Select top N_feat features
+
 slct_inds_pred = [1,13,4,16,22,24,5,27,7,21,3,8,26,17,14,6,20,30,28,11,29,18,2,12,31,25,32,9,19,23,10,34,38,36,33,40,41,39,35,15,37]
 X = dataset.iloc[:, slct_inds].values
 X = X[:,0:N_feat]
@@ -54,102 +56,30 @@ X_predict = sc.transform(X_predict)
 
 # Fitting Random Forest Classification to the Training set
 from sklearn.ensemble import RandomForestClassifier
-classifier = RandomForestClassifier(n_estimators = 100, criterion = 'entropy')
+classifier = RandomForestClassifier(n_estimators = 200, criterion = 'entropy', random_state=0)
 classifier.fit(X_train, y_train)
-if test_pred_flag:
-    y_conf = classifier.predict_proba(X_predict)
-    y_pred_RF = classifier.predict(X_predict)
-else:
-    y_conf = classifier.predict_proba(X_test)
-    y_pred_RF = classifier.predict(X_test)
-y_conf_RF = y_conf[:,1]    
-    
 
-# Fitting Decision Tree Classification to the Training set
-from sklearn.tree import DecisionTreeClassifier
-classifier = DecisionTreeClassifier(criterion = 'entropy', random_state = 0)
-classifier.fit(X_train, y_train)
-if test_pred_flag:
-    y_conf = classifier.predict_proba(X_predict)
-    y_pred_DT = classifier.predict(X_predict)
-else:
-    y_conf = classifier.predict_proba(X_test)
-    y_pred_DT = classifier.predict(X_test)
-y_conf_DT = y_conf[:,1]    
+# Optimal threshold 0.263
+threshold = 0.263
+# Test set 
+y_conf = classifier.predict_proba(X_test)
+y_conf_RF_test = y_conf[:,1]   
+y_pred_RF_test = (y_conf_RF_test>threshold).astype(int)
 
-# Fitting Logistic Regression to the Training set
-from sklearn.linear_model import LogisticRegression
-classifier = LogisticRegression(random_state = 0)
-classifier.fit(X_train, y_train)
-if test_pred_flag:
-    y_conf = classifier.predict_proba(X_predict)
-    y_pred_LR = classifier.predict(X_predict)
-else:
-    y_conf = classifier.predict_proba(X_test)
-    y_pred_LR = classifier.predict(X_test)
-y_conf_LR = y_conf[:,1]    
+# Print out stats about test    
+print('F1 score on test set = '+str(f1_score(y_test, y_pred_RF_test, average='binary')))
+print('Accuracy on test set = '+str(accuracy_score(y_test, y_pred_RF_test)))
+print('Brier score on test set = '+str(brier_score_loss(y_test, y_pred_RF_test)))
 
 
-# Fitting Naive Bayes to the Training set
-from sklearn.naive_bayes import GaussianNB
-classifier = GaussianNB()
-classifier.fit(X_train, y_train)
-if test_pred_flag:
-    y_conf = classifier.predict_proba(X_predict)
-    y_pred_NB = classifier.predict(X_predict)
-else:
-    y_conf = classifier.predict_proba(X_test)
-    y_pred_NB = classifier.predict(X_test)
-y_conf_NB = y_conf[:,1]    
-
-
-# Fitting K-NN to the Training set
-from sklearn.neighbors import KNeighborsClassifier
-classifier = KNeighborsClassifier(n_neighbors = 5, metric = 'minkowski', p = 2)
-classifier.fit(X_train, y_train)
-if test_pred_flag:
-    y_conf = classifier.predict_proba(X_predict)
-    y_pred_KN = classifier.predict(X_predict)
-else:
-    y_conf = classifier.predict_proba(X_test)
-    y_pred_KN = classifier.predict(X_test)
-    
-y_conf_KN = y_conf[:,1]    
+# Task set
+y_conf = classifier.predict_proba(X_predict)
+y_conf_RF = y_conf[:,1]   
+y_pred_RF = (y_conf_RF>threshold).astype(int) # Optimal threshold obtained from f1 score and sales maximization approaches
+ 
 
 
 
-# Fitting Kernel SVM to the Training set
-from sklearn.svm import SVC
-classifier = SVC(kernel = 'rbf', random_state = 0, probability = True)
-classifier.fit(X_train, y_train)
-if test_pred_flag:
-    y_conf = classifier.predict_proba(X_predict)
-    y_pred_SV = classifier.predict(X_predict)
-else:
-    y_conf = classifier.predict_proba(X_test)
-    y_pred_SV = classifier.predict(X_test)
-    
-y_conf_SV = y_conf[:,1]    
-
-results_conf = pd.DataFrame({'SVM':np.array(y_conf_SV),'RF':np.array(y_conf_RF),'KN':np.array(y_conf_KN),'LR':np.array(y_conf_LR),'DT':np.array(y_conf_DT)})
-results_decision = pd.DataFrame({'SVM':np.array(y_pred_SV),'RF':np.array(y_pred_RF),'KN':np.array(y_pred_KN),'LR':np.array(y_pred_LR),'DT':np.array(y_pred_DT)})
-
-
-
-
-# Fitting Neural Network SVM to the Training set
-#import keras
-#from keras.models import Sequential
-#from keras.layers import Dense
-#classifier = Sequential()
-#classifier.add(Dense(units = int(np.floor(2*(N_feat-1)/3)), kernel_initializer = 'uniform', activation = 'relu', input_dim = N_feat))
-#classifier.add(Dense(units = int(np.floor(2*(N_feat-1)/3)), kernel_initializer = 'uniform', activation = 'relu'))
-#classifier.add(Dense(units = int(np.floor((N_feat-1)/3)), kernel_initializer = 'uniform', activation = 'relu'))
-#classifier.add(Dense(units = 1, kernel_initializer = 'uniform', activation = 'sigmoid'))
-#classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
-#classifier.fit(X_train, y_train, batch_size = 5, epochs = 100)
-#y_conf_NN = classifier.predict(X_test)
-#y_pred_NN = (y_conf_NN > 0.5)
 
 
 #Filling in results
@@ -158,9 +88,35 @@ dataset_output.columns = ['','id','Churn_prediction','Churn_probability']
 dataset_output["Churn_probability"] = np.array(y_conf_RF)
 dataset_output["Churn_prediction"] = np.array(y_pred_RF)
 
-
+dataset_output = dataset_output.sort_values(['Churn_probability'], ascending=False)
 
 dataset_output.to_csv('ml_case_test_output_result.csv', index=False)  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
